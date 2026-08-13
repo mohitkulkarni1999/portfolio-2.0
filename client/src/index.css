@@ -1,0 +1,186 @@
+/* index.css — Noir Luxe (dark + gold) theme for the whole site */
+
+@import "tailwindcss";
+
+/* --- design tokens ---------------------------------------------------------
+   These become Tailwind utilities automatically:
+   bg-cream, text-ink, text-gold, shadow-card, shadow-gold, font-display ... */
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Playfair Display", Georgia, "Times New Roman", serif;
+
+  /* base page background (deep charcoal) */
+  --color-cream: #0b0d10;
+  /* band / surface background */
+  --color-paper: #13161b;
+  /* primary text (warm ivory) */
+  --color-ink: #f4efe6;
+  /* muted text */
+  --color-ink-soft: #a29a8c;
+  /* brass gold accents */
+  --color-gold: #c9a227;
+  --color-gold-light: #e9d9a3;
+  --color-gold-dark: #a8862a;
+
+  /* noir luxe surface palette */
+  --color-noir: #0b0d10;
+  --color-coal: #13161b;
+  --color-onyx: #1a1f26;
+  --color-ivory: #f4efe6;
+  --color-fog: #a29a8c;
+
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.35), 0 20px 45px -20px rgb(0 0 0 / 0.6);
+  --shadow-gold: 0 12px 30px -10px rgb(201 162 39 / 0.4);
+
+  --animate-float: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  @apply bg-cream text-ink font-sans antialiased overflow-x-hidden;
+}
+
+::selection { @apply bg-gold/30 text-noir; }
+
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-track { background: #0b0d10; }
+::-webkit-scrollbar-thumb { background: #2a2f36; border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: #3a4049; }
+
+/* --- reusable helpers ------------------------------------------------------ */
+
+.gold-gradient {
+  background-image: linear-gradient(120deg, #8a6a12, #c9a227 55%, #e3c76b);
+}
+
+.text-gold-gradient {
+  background-image: linear-gradient(120deg, #e3c76b, #c9a227);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.bg-grid {
+  background-image:
+    linear-gradient(to right, rgb(244 239 230 / 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(244 239 230 / 0.05) 1px, transparent 1px);
+  background-size: 44px 44px;
+}
+
+.card {
+  @apply bg-onyx rounded-2xl border border-white/10 shadow-card;
+}
+
+.btn-primary {
+  @apply inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-full text-noir font-semibold text-sm transition-all hover:shadow-gold disabled:opacity-50;
+  background-image: linear-gradient(120deg, #8a6a12, #c9a227 55%, #e3c76b);
+}
+
+.btn-ghost {
+  @apply inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-full border font-semibold text-sm transition-all border-white/20 text-ivory hover:border-gold/60;
+}
+
+.icon-btn {
+  @apply w-9 h-9 shrink-0 rounded-lg border border-white/15 flex items-center justify-center text-ivory/60 hover:text-ivory hover:border-gold/60 transition-all;
+}
+
+.input {
+  @apply w-full rounded-xl border border-white/10 bg-onyx px-4 py-3 text-sm text-ivory placeholder-ivory/35 outline-none focus:border-gold focus:ring-2 focus:ring-gold/25 transition-all;
+}
+
+.stat-card {
+  @apply bg-onyx rounded-2xl border border-white/10 shadow-card p-6 flex items-center gap-5;
+}
+
+/* eyebrow label above section titles */
+.eyebrow {
+  @apply inline-flex items-center gap-2 text-xs font-semibold tracking-[0.28em] uppercase text-gold-light;
+}
+
+.eyebrow::before {
+  content: "";
+  @apply block w-8 h-px bg-gold;
+}
+
+/* scroll-reveal animation (driven by the Reveal component) */
+.reveal {
+  opacity: 0;
+  transform: translateY(26px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+.reveal-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* --- noir luxe motion (Experience band) ------------------------------------- */
+
+@keyframes noir-rise {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes noir-pop {
+  0%   { opacity: 0; transform: scale(0.4); }
+  70%  { opacity: 1; transform: scale(1.14); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes noir-rail {
+  from { transform: scaleY(0); }
+  to   { transform: scaleY(1); }
+}
+@keyframes noir-glow {
+  0%, 100% { opacity: 0.45; transform: translate(0, 0) scale(1); }
+  50%      { opacity: 0.8;  transform: translate(12px, -16px) scale(1.08); }
+}
+
+/* fill-mode: backwards — the "from" frame applies during delay, then releases
+   the element so hover transforms still work after the animation ends */
+.anim-rise  { animation: noir-rise 0.75s cubic-bezier(0.22, 1, 0.36, 1) backwards; }
+.anim-pop   { animation: noir-pop 0.55s cubic-bezier(0.22, 1, 0.36, 1) backwards; }
+.anim-rail  { animation: noir-rail 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards; transform-origin: top; }
+.anim-glow  { animation: noir-glow 9s ease-in-out infinite; }
+.d1 { animation-delay: 60ms; }
+.d2 { animation-delay: 140ms; }
+.d3 { animation-delay: 220ms; }
+.d4 { animation-delay: 300ms; }
+.d5 { animation-delay: 380ms; }
+.d6 { animation-delay: 460ms; }
+.d7 { animation-delay: 540ms; }
+
+/* gold shine that sweeps across a card on hover */
+.card-shine {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.card-shine::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 45%;
+  background: linear-gradient(105deg, transparent 0%, rgb(255 255 255 / 0.07) 50%, transparent 100%);
+  transform: translateX(-150%) skewX(-18deg);
+  transition: transform 1s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.group:hover .card-shine::after {
+  transform: translateX(320%) skewX(-18deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal, .reveal-visible, [class*="anim-"], .card-shine::after {
+    transition: none;
+    animation: none;
+  }
+  .reveal { opacity: 1; transform: none; }
+}

@@ -1,0 +1,26 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+dist-ssr/
+
+# environment / secrets
+.env
+.env.*
+!.env.example
+
+# uploads (local file storage — not for git)
+server/uploads/
+
+# logs
+*.log
+npm-debug.log*
+
+# editor / os
+.DS_Store
+.vscode/
+.idea/
+
+# vercel
+.vercel/

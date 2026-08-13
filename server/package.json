@@ -1,0 +1,10 @@
+{
+  "name": "portfolio-server",
+  "version": "1.0.0",
+  "description": "Express backend for the portfolio website",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  }
+}
