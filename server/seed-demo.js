@@ -1,10 +1,12 @@
 // seed-demo.js — fills the site with editable demo content for the CMS.
-// Run it whenever you want to reset the demo data:  node seed-demo.js
-// (Requires the server to be running on port 5000.)
+// Run it whenever you want to reset the demo data:
+//   node seed-demo.js                      (local server, http://localhost:5000)
+//   $env:API_URL="https://your-api.vercel.app/api"; node seed-demo.js
+// (Requires a running server — local or deployed. The script logs in as admin.)
 // IMPORTANT: everything here is a starting point. You can change it all from
 // the admin dashboard — this script just gets you a complete site quickly.
 
-const BASE = 'http://localhost:5000/api';
+const BASE = process.env.API_URL || 'http://localhost:5000/api';
 
 async function req(path, { method = 'GET', token, body } = {}) {
   const res = await fetch(BASE + path, {
