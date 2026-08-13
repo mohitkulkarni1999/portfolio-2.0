@@ -87,6 +87,11 @@ router.post('/upload', auth, upload.single('photo'), async (req, res) => {
   try {
     // On Vercel (Blob mode) the file is in memory -> store it in Vercel Blob.
     if (req.file.buffer) {
+      if (!process.env.BLOB_READ_WRITE_TOKEN) {
+        return res.status(500).json({
+          message: 'Uploads not configured. Set BLOB_READ_WRITE_TOKEN (Vercel Blob) on the backend.',
+        });
+      }
       const { put } = require('@vercel/blob');
       const name = Date.now() + '-' + Math.round(Math.random() * 1e9) + path.extname(req.file.originalname);
       const blob = await put(name, req.file.buffer, { access: 'public' });

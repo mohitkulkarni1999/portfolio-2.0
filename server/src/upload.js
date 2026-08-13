@@ -6,11 +6,12 @@
 const multer = require('multer');
 const path = require('path');
 
-const useBlob = !!process.env.BLOB_READ_WRITE_TOKEN;
+const useBlob = !!process.env.BLOB_READ_WRITE_TOKEN || !!process.env.VERCEL;
 
-const storage = useBlob
-  ? multer.memoryStorage()
-  : multer.diskStorage({
+// On Vercel the filesystem is read-only, so always keep files in memory there.
+// The route then pushes them to Vercel Blob (if a token is set) or returns a
+// clear error. Local dev keeps writing to uploads/ as before.
+const storage = useBlob ? multer.memoryStorage() : multer.diskStorage({
       // where to save the file
       destination: (req, file, cb) => cb(null, 'uploads/'),
 
