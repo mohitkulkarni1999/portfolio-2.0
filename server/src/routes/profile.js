@@ -4,6 +4,7 @@
 // POST /api/profile/upload     -> admin only, uploads a photo
 
 const express = require('express');
+const path = require('path');
 const pool = require('../db');
 const auth = require('../middleware/auth');
 const upload = require('../upload');
@@ -79,12 +80,24 @@ router.put('/', auth, async (req, res) => {
 });
 
 // POST /api/profile/upload  (admin only) — photo upload with preview support
-router.post('/upload', auth, upload.single('photo'), (req, res) => {
+router.post('/upload', auth, upload.single('photo'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ message: 'No file uploaded' });
   }
-  // the URL the browser can use to show the image
-  res.json({ url: '/uploads/' + req.file.filename });
+  try {
+    // On Vercel (Blob mode) the file is in memory -> store it in Vercel Blob.
+    if (req.file.buffer) {
+      const { put } = require('@vercel/blob');
+      const name = Date.now() + '-' + Math.round(Math.random() * 1e9) + path.extname(req.file.originalname);
+      const blob = await put(name, req.file.buffer, { access: 'public' });
+      return res.json({ url: blob.url });
+    }
+    // Local dev: serve from the uploads/ folder
+    res.json({ url: '/uploads/' + req.file.filename });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Upload failed' });
+  }
 });
 
 module.exports = router;

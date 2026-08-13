@@ -1,8 +1,25 @@
-// api.js — a small helper for talking to the backend
-// The Vite dev server forwards /api and /uploads to http://localhost:5000
+// api.js — a small helper for talking to the backend.
+// In dev, Vite proxies /api and /uploads to http://localhost:5000, so API_BASE is ''.
+// In production (Vercel), set VITE_API_URL to your backend URL and all calls go there.
+
+const API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '')
+
+// The backend returns image URLs as "/uploads/..." locally but as full https URLs
+// when using Vercel Blob. When the backend lives on another domain in production,
+// relative /uploads paths must be resolved against the API origin.
+function resolveUrls(value) {
+  if (typeof value === 'string') {
+    return value.startsWith('/uploads/') ? API_BASE + value : value
+  }
+  if (Array.isArray(value)) return value.map(resolveUrls)
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, resolveUrls(v)]))
+  }
+  return value
+}
 
 async function request(path, options = {}) {
-  const res = await fetch(path, options)
+  const res = await fetch(API_BASE + path, options)
   if (!res.ok) {
     let message = 'Something went wrong'
     try {
@@ -11,7 +28,7 @@ async function request(path, options = {}) {
     } catch {}
     throw new Error(message)
   }
-  return res.json()
+  return resolveUrls(await res.json())
 }
 
 // build options for JSON requests (adds the admin token if we have one)
