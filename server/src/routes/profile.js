@@ -85,18 +85,38 @@ router.post('/upload', auth, upload.single('photo'), async (req, res) => {
     return res.status(400).json({ message: 'No file uploaded' });
   }
   try {
-    // On Vercel (Blob mode) the file is in memory -> store it in Vercel Blob.
+    // Cloud mode: the file is in memory -> push to Supabase Storage or Vercel Blob.
     if (req.file.buffer) {
-      if (!process.env.BLOB_READ_WRITE_TOKEN) {
-        return res.status(500).json({
-          message: 'Uploads not configured. Set BLOB_READ_WRITE_TOKEN (Vercel Blob) on the backend.',
+      // 1) Supabase Storage (preferred — you already have a Supabase project)
+      if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+        const { createClient } = require('@supabase/supabase-js');
+        const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+        const bucket = process.env.SUPABASE_BUCKET || 'portfolio';
+        const name = Date.now() + '-' + Math.round(Math.random() * 1e9) + path.extname(req.file.originalname);
+
+        const { error } = await supabase.storage.from(bucket).upload(name, req.file.buffer, {
+          contentType: req.file.mimetype,
         });
+        if (error) return res.status(500).json({ message: 'Upload failed: ' + error.message });
+
+        const { data } = supabase.storage.from(bucket).getPublicUrl(name);
+        return res.json({ url: data.publicUrl });
       }
-      const { put } = require('@vercel/blob');
-      const name = Date.now() + '-' + Math.round(Math.random() * 1e9) + path.extname(req.file.originalname);
-      const blob = await put(name, req.file.buffer, { access: 'public' });
-      return res.json({ url: blob.url });
+
+      // 2) Vercel Blob (fallback)
+      if (process.env.BLOB_READ_WRITE_TOKEN) {
+        const { put } = require('@vercel/blob');
+        const name = Date.now() + '-' + Math.round(Math.random() * 1e9) + path.extname(req.file.originalname);
+        const blob = await put(name, req.file.buffer, { access: 'public' });
+        return res.json({ url: blob.url });
+      }
+
+      return res.status(500).json({
+        message:
+          'Uploads not configured. Set SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY on the backend (or BLOB_READ_WRITE_TOKEN for Vercel Blob).',
+      });
     }
+
     // Local dev: serve from the uploads/ folder
     res.json({ url: '/uploads/' + req.file.filename });
   } catch (err) {

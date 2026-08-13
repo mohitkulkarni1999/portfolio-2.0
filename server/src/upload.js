@@ -1,17 +1,21 @@
 // upload.js — configures multer.
-// - With a Vercel Blob token (BLOB_READ_WRITE_TOKEN) files go to memory and the
-//   route pushes them to Vercel Blob storage (persistent on serverless).
+// - On Vercel, or when cloud storage is configured (Supabase Storage or Vercel
+//   Blob), files go to memory and the route pushes them to cloud storage.
 // - Otherwise files are saved into the local uploads/ folder (local dev).
 
 const multer = require('multer');
 const path = require('path');
 
-const useBlob = !!process.env.BLOB_READ_WRITE_TOKEN || !!process.env.VERCEL;
+const useMemory =
+  !!process.env.BLOB_READ_WRITE_TOKEN ||
+  !!process.env.VERCEL ||
+  (!!process.env.SUPABASE_URL && !!process.env.SUPABASE_SERVICE_ROLE_KEY);
 
 // On Vercel the filesystem is read-only, so always keep files in memory there.
-// The route then pushes them to Vercel Blob (if a token is set) or returns a
-// clear error. Local dev keeps writing to uploads/ as before.
-const storage = useBlob ? multer.memoryStorage() : multer.diskStorage({
+// The route then pushes them to cloud storage, or returns a clear error.
+const storage = useMemory
+  ? multer.memoryStorage()
+  : multer.diskStorage({
       // where to save the file
       destination: (req, file, cb) => cb(null, 'uploads/'),
 
