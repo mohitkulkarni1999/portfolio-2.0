@@ -8,7 +8,9 @@
 const { Pool } = require('pg');
 require('dotenv').config();
 
-const connectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+// Strip any ?sslmode=... query so node-postgres doesn't treat it as verify-full
+// and override the ssl option below (Supabase certs are not in Node's trust store).
+const connectionString = (process.env.DATABASE_URL || process.env.POSTGRES_URL || '').split('?')[0] || undefined;
 
 const pool = connectionString
   ? new Pool({

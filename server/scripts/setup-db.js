@@ -22,8 +22,11 @@ const schema = fs.readFileSync(path.join(__dirname, '..', '..', 'database', 'sch
 const migrate = fs.readFileSync(path.join(__dirname, '..', '..', 'database', 'migrate-cms.sql'), 'utf8');
 
 async function main() {
+  // Strip ?sslmode=... so it doesn't override our ssl option (Supabase certs
+  // are not in Node's trust store, so we connect encrypted without host check).
+  const connectionString = DATABASE_URL.split('?')[0];
   const client = new Client({
-    connectionString: DATABASE_URL,
+    connectionString,
     ssl: { rejectUnauthorized: false },
   });
 
