@@ -77,7 +77,9 @@ export default function Hero({ profile }) {
 
         {description && (
           <Reveal delay={340}>
-            <p className="mt-6 max-w-2xl text-white/75 leading-relaxed text-sm md:text-base">{description}</p>
+            <p className="mt-7 max-w-3xl text-white/85 leading-relaxed text-base md:text-lg whitespace-pre-line">
+              {description}
+            </p>
           </Reveal>
         )}
 
