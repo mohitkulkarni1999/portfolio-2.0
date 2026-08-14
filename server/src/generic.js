@@ -18,11 +18,15 @@ const jwt = require('jsonwebtoken');
 const pool = require('./db');
 const auth = require('./middleware/auth');
 
-// Remember each table's columns so we don't query the database on every call.
-const columnsCache = {};
+// Cache each table's columns for a short time so we don't query the database
+// on every call — but refresh periodically so newly-added columns (like file_url)
+// are picked up without needing a server restart.
+const columnsCache = {}; // { table: { at: timestamp, cols: [...] } }
+const COLUMNS_TTL_MS = 60 * 1000;
 
 async function getColumns(table) {
-  if (!columnsCache[table]) {
+  const cached = columnsCache[table];
+  if (!cached || Date.now() - cached.at > COLUMNS_TTL_MS) {
     const res = await pool.query(
       `SELECT column_name, data_type
          FROM information_schema.columns
@@ -31,11 +35,14 @@ async function getColumns(table) {
       [table]
     );
     // id, created_at, updated_at are managed automatically — never edited directly
-    columnsCache[table] = res.rows.filter(
-      (c) => !['id', 'created_at', 'updated_at'].includes(c.column_name)
-    );
+    columnsCache[table] = {
+      at: Date.now(),
+      cols: res.rows.filter(
+        (c) => !['id', 'created_at', 'updated_at'].includes(c.column_name)
+      ),
+    };
   }
-  return columnsCache[table];
+  return columnsCache[table].cols;
 }
 
 // turn a JSON value into the right type for the column (boolean / number / text)
