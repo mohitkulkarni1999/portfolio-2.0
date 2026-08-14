@@ -22,12 +22,22 @@ export default function Certifications({ certifications }) {
             {items.map((c, i) => {
               const hasFile = Boolean(c.file_url)
               const hasImage = Boolean(c.image_url)
+              const isPdf = /\.pdf(\?|$)/i.test(c.file_url || '')
               const openLink = hasFile ? c.file_url : hasImage ? c.image_url : ''
 
               return (
                 <Reveal key={c.id} delay={(i % 3) * 110}>
                   <div className="card overflow-hidden h-full group hover:border-gold/40 transition-colors">
-                    {hasImage && IMAGE_RE.test(c.image_url) ? (
+                    {isPdf ? (
+                      <div className="h-60 overflow-hidden bg-black/20">
+                        <iframe
+                          src={c.file_url}
+                          title={c.name}
+                          className="w-full h-full border-0"
+                          loading="lazy"
+                        />
+                      </div>
+                    ) : hasImage && IMAGE_RE.test(c.image_url) ? (
                       <div className="h-44 overflow-hidden">
                         <img
                           src={c.image_url}
