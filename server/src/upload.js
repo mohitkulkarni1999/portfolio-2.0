@@ -33,10 +33,33 @@ function fileFilter(req, file, cb) {
   else cb(new Error('Only image files are allowed'));
 }
 
+// image-only uploader (profile photos, hero/about images, etc.)
 const upload = multer({
   storage,
   fileFilter,
   limits: { fileSize: 4 * 1024 * 1024 }, // max 4MB (fits Vercel's function limit)
 });
 
-module.exports = upload;
+// images + documents (certificates: PDF, Word, Excel, PowerPoint, text)
+const DOC_MIMES = [
+  'image/jpeg', 'image/png', 'image/webp', 'image/gif',
+  'application/pdf',
+  'application/msword',                                            // .doc
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+  'application/vnd.ms-excel',                                      // .xls
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',      // .xlsx
+  'application/vnd.ms-powerpoint',                                 // .ppt
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation', // .pptx
+  'text/plain',                                                    // .txt
+];
+
+const uploadDoc = multer({
+  storage,
+  fileFilter: (req, file, cb) => {
+    if (DOC_MIMES.includes(file.mimetype)) cb(null, true);
+    else cb(new Error('Only images and documents are allowed (PDF, Word, Excel, PowerPoint, text)'));
+  },
+  limits: { fileSize: 15 * 1024 * 1024 }, // max 15MB
+});
+
+module.exports = { upload, uploadDoc };

@@ -75,6 +75,7 @@ CREATE TABLE IF NOT EXISTS certifications (
   organization TEXT NOT NULL DEFAULT '',
   date         TEXT NOT NULL DEFAULT '',
   image_url    TEXT NOT NULL DEFAULT '',
+  file_url     TEXT NOT NULL DEFAULT '',
   description  TEXT NOT NULL DEFAULT '',
   sort_order   INT  NOT NULL DEFAULT 0,
   is_visible   BOOLEAN NOT NULL DEFAULT TRUE,
@@ -120,9 +121,9 @@ INSERT INTO sections (section_key, label, sort_order, is_visible) VALUES
   ('expertise',     'Expertise',     4,  TRUE),
   ('metrics',       'Metrics',       5,  TRUE),
   ('achievements',  'Achievements',  6,  TRUE),
-  ('certifications','Certifications',7,  FALSE),
+  ('certifications','Certifications',7,  TRUE),
   ('testimonials',  'Testimonials',  8,  TRUE),
   ('articles',      'Articles',      9,  TRUE),
-  ('gallery',       'Gallery',       10, FALSE),
+  ('gallery',       'Gallery',       10, TRUE),
   ('contact',       'Contact',       11, TRUE)
 ON CONFLICT (section_key) DO NOTHING;

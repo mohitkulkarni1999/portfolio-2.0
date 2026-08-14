@@ -66,7 +66,8 @@ const certificationColumns = [
   { key: 'name', label: 'Certificate name', required: true },
   { key: 'organization', label: 'Organization' },
   { key: 'date', label: 'Date (e.g. Mar 2024)' },
-  { key: 'image_url', label: 'Certificate image', type: 'image' },
+  { key: 'file_url', label: 'Certificate file (PDF / Word / Excel)', type: 'file' },
+  { key: 'image_url', label: 'Certificate image (optional thumbnail)', type: 'image' },
   { key: 'description', label: 'Description', type: 'textarea' },
   { key: 'sort_order', label: 'Order (lower = first)', type: 'number' },
 ]

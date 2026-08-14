@@ -7,11 +7,14 @@
 //   - up/down reorder buttons if the items have a `sort_order` field
 
 import { useState } from 'react'
-import { Plus, Pencil, Trash2, ChevronUp, ChevronDown, GripVertical } from 'lucide-react'
+import { Plus, Pencil, Trash2, ChevronUp, ChevronDown, GripVertical, FileText } from 'lucide-react'
 import Modal from './Modal'
 import FormField from './FormField'
 import ImageUpload from './ImageUpload'
+import FileUpload from './FileUpload'
 import Toggle from './Toggle'
+
+const IMAGE_RE = /\.(jpe?g|png|webp|gif|avif|svg)(\?|$)/i
 
 export default function CrudSection({
   title, columns, items, setItems, token,
@@ -28,7 +31,7 @@ export default function CrudSection({
     columns.forEach((c) => {
       if (c.type === 'number') blank[c.key] = 0
       else if (c.type === 'select' && c.options?.length) blank[c.key] = c.options[0].value
-      else if (c.type === 'image') blank[c.key] = ''
+      else if (c.type === 'image' || c.type === 'file') blank[c.key] = ''
       else blank[c.key] = ''
     })
     setForm(blank)
@@ -134,7 +137,7 @@ export default function CrudSection({
     }
   }
 
-  const imageCol = columns.find((c) => c.type === 'image')
+  const previewCol = columns.find((c) => c.type === 'image' || c.type === 'file')
 
   return (
     <div>
@@ -167,8 +170,14 @@ export default function CrudSection({
             >
               <GripVertical size={16} />
             </span>
-            {imageCol && item[imageCol.key] && (
-              <img src={item[imageCol.key]} alt="" className="w-14 h-14 rounded-lg object-cover border border-white/10 shrink-0" />
+            {previewCol && item[previewCol.key] && (
+              IMAGE_RE.test(item[previewCol.key]) ? (
+                <img src={item[previewCol.key]} alt="" className="w-14 h-14 rounded-lg object-cover border border-white/10 shrink-0" />
+              ) : (
+                <div className="w-14 h-14 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-gold-light shrink-0" title="Document file">
+                  <FileText size={18} />
+                </div>
+              )
             )}
             <div className="flex-1 min-w-0">
               <p className={`font-semibold truncate ${item.is_visible === false ? 'text-ivory/40' : 'text-ivory'}`}>
@@ -220,6 +229,17 @@ export default function CrudSection({
             if (col.type === 'image') {
               return (
                 <ImageUpload
+                  key={col.key}
+                  token={token}
+                  value={value}
+                  onChange={(url) => handleField(col.key, url)}
+                  label={col.label}
+                />
+              )
+            }
+            if (col.type === 'file') {
+              return (
+                <FileUpload
                   key={col.key}
                   token={token}
                   value={value}

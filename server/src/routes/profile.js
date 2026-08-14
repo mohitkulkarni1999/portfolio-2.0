@@ -7,7 +7,7 @@ const express = require('express');
 const path = require('path');
 const pool = require('../db');
 const auth = require('../middleware/auth');
-const upload = require('../upload');
+const { upload, uploadDoc } = require('../upload');
 
 const router = express.Router();
 
@@ -79,50 +79,81 @@ router.put('/', auth, async (req, res) => {
   }
 });
 
-// POST /api/profile/upload  (admin only) — photo upload with preview support
+// Push an uploaded file (image or document) to cloud storage when configured,
+// otherwise keep it in the local uploads/ folder.
+async function saveUpload(file) {
+  // Cloud mode: the file is in memory -> push to Supabase Storage or Vercel Blob.
+  if (file.buffer) {
+    // 1) Supabase Storage (preferred — you already have a Supabase project)
+    if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      const { createClient } = require('@supabase/supabase-js');
+      const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+      const bucket = process.env.SUPABASE_BUCKET || 'portfolio';
+      const name = Date.now() + '-' + Math.round(Math.random() * 1e9) + path.extname(file.originalname);
+
+      const { error } = await supabase.storage.from(bucket).upload(name, file.buffer, {
+        contentType: file.mimetype,
+      });
+      if (error) {
+        const err = new Error('Upload failed: ' + error.message);
+        err.status = 500;
+        throw err;
+      }
+
+      const { data } = supabase.storage.from(bucket).getPublicUrl(name);
+      return data.publicUrl;
+    }
+
+    // 2) Vercel Blob (fallback)
+    if (process.env.BLOB_READ_WRITE_TOKEN) {
+      const { put } = require('@vercel/blob');
+      const name = Date.now() + '-' + Math.round(Math.random() * 1e9) + path.extname(file.originalname);
+      const blob = await put(name, file.buffer, { access: 'public' });
+      return blob.url;
+    }
+
+    const err = new Error(
+      'Uploads not configured. Set SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY on the backend (or BLOB_READ_WRITE_TOKEN for Vercel Blob).'
+    );
+    err.status = 500;
+    throw err;
+  }
+
+  // Local dev: serve from the uploads/ folder
+  return '/uploads/' + file.filename;
+}
+
+// POST /api/profile/upload  (admin only) — image upload with preview support
 router.post('/upload', auth, upload.single('photo'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ message: 'No file uploaded' });
   }
   try {
-    // Cloud mode: the file is in memory -> push to Supabase Storage or Vercel Blob.
-    if (req.file.buffer) {
-      // 1) Supabase Storage (preferred — you already have a Supabase project)
-      if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
-        const { createClient } = require('@supabase/supabase-js');
-        const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
-        const bucket = process.env.SUPABASE_BUCKET || 'portfolio';
-        const name = Date.now() + '-' + Math.round(Math.random() * 1e9) + path.extname(req.file.originalname);
-
-        const { error } = await supabase.storage.from(bucket).upload(name, req.file.buffer, {
-          contentType: req.file.mimetype,
-        });
-        if (error) return res.status(500).json({ message: 'Upload failed: ' + error.message });
-
-        const { data } = supabase.storage.from(bucket).getPublicUrl(name);
-        return res.json({ url: data.publicUrl });
-      }
-
-      // 2) Vercel Blob (fallback)
-      if (process.env.BLOB_READ_WRITE_TOKEN) {
-        const { put } = require('@vercel/blob');
-        const name = Date.now() + '-' + Math.round(Math.random() * 1e9) + path.extname(req.file.originalname);
-        const blob = await put(name, req.file.buffer, { access: 'public' });
-        return res.json({ url: blob.url });
-      }
-
-      return res.status(500).json({
-        message:
-          'Uploads not configured. Set SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY on the backend (or BLOB_READ_WRITE_TOKEN for Vercel Blob).',
-      });
-    }
-
-    // Local dev: serve from the uploads/ folder
-    res.json({ url: '/uploads/' + req.file.filename });
+    const url = await saveUpload(req.file);
+    res.json({ url });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: 'Upload failed' });
+    res.status(err.status || 500).json({ message: 'Upload failed' });
   }
+});
+
+// POST /api/profile/upload-file  (admin only) — certificate documents (PDF, Word, Excel)
+router.post('/upload-file', auth, uploadDoc.single('file'), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ message: 'No file uploaded' });
+  }
+  try {
+    const url = await saveUpload(req.file);
+    res.json({ url });
+  } catch (err) {
+    console.error(err);
+    res.status(err.status || 500).json({ message: 'Upload failed' });
+  }
+});
+
+// multer rejects disallowed file types -> send a clean JSON error the app can show
+router.use((err, req, res, next) => {
+  res.status(400).json({ message: err.message || 'Upload failed' });
 });
 
 module.exports = router;

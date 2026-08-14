@@ -152,7 +152,8 @@ CREATE TABLE IF NOT EXISTS certifications (
   name         TEXT NOT NULL,
   organization TEXT NOT NULL DEFAULT '',
   date         TEXT NOT NULL DEFAULT '',
-  image_url    TEXT NOT NULL DEFAULT '',
+  image_url    TEXT NOT NULL DEFAULT '',   -- optional thumbnail / scanned certificate image
+  file_url     TEXT NOT NULL DEFAULT '',   -- optional certificate document (PDF, Word, Excel)
   description  TEXT NOT NULL DEFAULT '',
   sort_order   INT  NOT NULL DEFAULT 0,
   is_visible   BOOLEAN NOT NULL DEFAULT TRUE,
@@ -192,3 +193,18 @@ CREATE TABLE IF NOT EXISTS sections (
   sort_order  INT  NOT NULL DEFAULT 0,
   is_visible  BOOLEAN NOT NULL DEFAULT TRUE
 );
+
+-- default sections (order + visibility can be changed from the admin dashboard)
+INSERT INTO sections (section_key, label, sort_order, is_visible) VALUES
+  ('hero',          'Hero',          1,  TRUE),
+  ('about',         'About',         2,  TRUE),
+  ('experience',    'Experience',    3,  TRUE),
+  ('expertise',     'Expertise',     4,  TRUE),
+  ('metrics',       'Metrics',       5,  TRUE),
+  ('achievements',  'Achievements',  6,  TRUE),
+  ('certifications','Certifications',7,  TRUE),
+  ('testimonials',  'Testimonials',  8,  TRUE),
+  ('articles',      'Articles',      9,  TRUE),
+  ('gallery',       'Gallery',       10, TRUE),
+  ('contact',       'Contact',       11, TRUE)
+ON CONFLICT (section_key) DO NOTHING;

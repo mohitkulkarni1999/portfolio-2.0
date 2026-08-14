@@ -76,6 +76,15 @@ export const api = {
       body: form,
     })
   },
+  uploadFile: (file, token) => {
+    const form = new FormData()
+    form.append('file', file)
+    return request('/api/profile/upload-file', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + token },
+      body: form,
+    })
+  },
 
   // --- admin: sections (order + visibility) ---
   sections: {
